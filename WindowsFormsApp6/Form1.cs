@@ -1,20 +1,198 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
+using System.IO;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 
-namespace WindowsFormsApp6
+
+public class NoteManager
 {
-    public partial class Form1 : Form
+    public List<Note> Notes { get; private set; }
+
+    public NoteManager()
     {
-        public Form1()
+        Notes = new List<Note>();
+        LoadNotes();
+    }
+
+    public void AddNote(Note note)
+    {
+        if (note == null)
         {
-            InitializeComponent();
+            throw new ArgumentNullException(nameof(note));
         }
+        Notes.Add(note);
+        SaveNotes();
+    }
+
+    public void RemoveNote(Note note)
+    {
+        if (note == null)
+        {
+            throw new ArgumentNullException(nameof(note));
+        }
+        Notes.Remove(note);
+        SaveNotes();
+    }
+
+    private void SaveNotes()
+    {
+        File.WriteAllLines("notes.txt", Notes.Select(n => $"{n.Title}|{n.Content}|{n.Date.ToString("yyyy-MM-dd HH:mm:ss")}"));
+    }
+
+    private void LoadNotes()
+    {
+        if (File.Exists("notes.txt"))
+        {
+            var lines = File.ReadAllLines("notes.txt");
+            foreach (var line in lines)
+            {
+                var parts = line.Split('|');
+                if (parts.Length == 3)
+                {
+                    DateTime date;
+                    if (DateTime.TryParse(parts[2], out date))
+                    {
+                        Notes.Add(new Note(parts[0], parts[1], date));
+                    }
+                }
+            }
+        }
+    }
+}
+
+public class NoteForm : Form
+{
+    private NoteManager noteManager;
+    private TextBox titleTextBox;
+    private TextBox contentTextBox;
+    private Button addNoteButton;
+    private ListBox notesListBox;
+    private Button removeNoteButton;
+
+    public NoteForm()
+    {
+        this.Text = "Управление заметками";
+        this.Width = 500;
+        this.Height = 400;
+
+        titleTextBox = new TextBox
+        {
+            Location = new System.Drawing.Point(10, 10),
+            Width = 200,
+
+        };
+
+        contentTextBox = new TextBox
+        {
+            Location = new System.Drawing.Point(10, 40),
+            Width = 200,
+            Height = 100,
+            Multiline = true,
+            ScrollBars = ScrollBars.Both,
+
+        };
+
+        addNoteButton = new Button
+        {
+            Location = new System.Drawing.Point(10, 150),
+            Text = "Добавить",
+            Width = 100
+        };
+        addNoteButton.Click += AddNoteButton_Click;
+
+        notesListBox = new ListBox
+        {
+            Location = new System.Drawing.Point(220, 10),
+            Width = 250,
+            Height = 200
+        };
+
+        removeNoteButton = new Button
+        {
+            Location = new System.Drawing.Point(220, 220),
+            Text = "Удалить",
+            Width = 100
+        };
+        removeNoteButton.Click += RemoveNoteButton_Click;
+
+        this.Controls.Add(titleTextBox);
+        this.Controls.Add(contentTextBox);
+        this.Controls.Add(addNoteButton);
+        this.Controls.Add(notesListBox);
+        this.Controls.Add(removeNoteButton);
+
+        noteManager = new NoteManager();
+        UpdateNotesList();
+    }
+
+    private void UpdateNotesList()
+    {
+        notesListBox.Items.Clear();
+        foreach (var note in noteManager.Notes)
+        {
+            notesListBox.Items.Add($"{note.Title} ({note.Date.ToString("yyyy-MM-dd")})");
+        }
+    }
+
+    private void AddNoteButton_Click(object sender, EventArgs e)
+    {
+        if (string.IsNullOrEmpty(titleTextBox.Text) || string.IsNullOrEmpty(contentTextBox.Text))
+        {
+            MessageBox.Show("Заполните все поля!");
+            return;
+        }
+        Note newNote = new Note(titleTextBox.Text, contentTextBox.Text);
+        try
+        {
+            noteManager.AddNote(newNote);
+            titleTextBox.Clear();
+            contentTextBox.Clear();
+            UpdateNotesList();
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show(ex.Message);
+        }
+    }
+
+    private void RemoveNoteButton_Click(object sender, EventArgs e)
+    {
+        if (notesListBox.SelectedIndex == -1)
+        {
+            MessageBox.Show("Выберите заметку для удаления!");
+            return;
+        }
+        string selectedItem = notesListBox.SelectedItem.ToString();
+        string[] parts = selectedItem.Split(new[] { '(' }, StringSplitOptions.None);
+        if (parts.Length >= 2)
+        {
+            string title = parts[0];
+            DateTime date;
+            if (DateTime.TryParse(parts[1].Split(')')[0], out date))
+            {
+                var noteToRemove = noteManager.Notes.Find(n => n.Title == title && n.Date.Date == date.Date);
+                if (noteToRemove != null)
+                {
+                    try
+                    {
+                        noteManager.RemoveNote(noteToRemove);
+                        UpdateNotesList();
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show(ex.Message);
+                    }
+                }
+            }
+        }
+    }
+
+    [STAThread]
+    static void Main()
+    {
+        Application.EnableVisualStyles();
+        Application.SetCompatibleTextRenderingDefault(false);
+        Application.Run(new NoteForm());
     }
 }
