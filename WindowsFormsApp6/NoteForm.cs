@@ -116,7 +116,7 @@ namespace WindowsFormsApp6
             string[] parts = selectedItem.Split(new[] { '(' }, StringSplitOptions.None);
             if (parts.Length >= 2)
             {
-                string title = parts[0];
+                string title = parts[0].Trim();
                 DateTime date;
                 if (DateTime.TryParse(parts[1].Split(')')[0], out date))
                 {
