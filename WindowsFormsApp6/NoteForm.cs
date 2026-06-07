@@ -18,6 +18,7 @@ namespace WindowsFormsApp6
         private Button addNoteButton;
         private ListBox notesListBox;
         private Button removeNoteButton;
+        private TextBox tagTextBox;
 
         public NoteForm()
         {
@@ -65,6 +66,21 @@ namespace WindowsFormsApp6
             };
             removeNoteButton.Click += RemoveNoteButton_Click;
 
+            Label tagLabel = new Label
+            {
+                Location = new System.Drawing.Point(10, 290),
+                Text = "Тег:",
+                Width = 50
+            };
+
+            tagTextBox = new TextBox
+            {
+                Location = new System.Drawing.Point(60, 290),
+                Width = 150
+            };
+
+            this.Controls.Add(tagLabel);
+            this.Controls.Add(tagTextBox);
             this.Controls.Add(titleTextBox);
             this.Controls.Add(contentTextBox);
             this.Controls.Add(addNoteButton);
@@ -80,7 +96,16 @@ namespace WindowsFormsApp6
             notesListBox.Items.Clear();
             foreach (var note in noteManager.Notes)
             {
-                notesListBox.Items.Add($"{note.Title} ({note.Date.ToString("yyyy-MM-dd")})");
+                if (string.IsNullOrEmpty(note.Tag))
+                {
+                  
+                    notesListBox.Items.Add($"{note.Title} ({note.Date:yyyy-MM-dd})");
+                }
+                else
+                {
+                    
+                    notesListBox.Items.Add($"{note.Title} [{note.Tag}] ({note.Date:yyyy-MM-dd})");
+                }
             }
         }
 
@@ -92,9 +117,14 @@ namespace WindowsFormsApp6
                 return;
             }
             Note newNote = new Note(titleTextBox.Text, contentTextBox.Text);
+            newNote.Tag = tagTextBox.Text;
             try
             {
                 noteManager.AddNote(newNote);
+                titleTextBox.Clear();
+                contentTextBox.Clear();
+                tagTextBox.Clear();
+
                 titleTextBox.Clear();
                 contentTextBox.Clear();
                 UpdateNotesList();

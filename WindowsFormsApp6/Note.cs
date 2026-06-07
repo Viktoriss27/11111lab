@@ -11,6 +11,7 @@ namespace WindowsFormsApp6
         public string Title { get; set; }
         public string Content { get; set; }
         public DateTime Date { get; set; }
+        public string Tag { get; set; }
 
         public Note(string title, string content)
         {
@@ -24,6 +25,13 @@ namespace WindowsFormsApp6
             Content = content;
             Date = date;
 
+        }
+        public Note(string title, string content, DateTime date, string tag)
+        {
+            Title = title;
+            Content = content;
+            Date = date;
+            Tag = tag;
         }
     }
 }

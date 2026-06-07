@@ -39,7 +39,7 @@ namespace WindowsFormsApp6
 
         private void SaveNotes()
         {
-            File.WriteAllLines("notes.txt", Notes.Select(n => $"{n.Title}|{n.Content}|{n.Date.ToString("yyyy-MM-dd HH:mm:ss")}"));
+            File.WriteAllLines("notes.txt", Notes.Select(n => $"{n.Title}|{n.Content}|{n.Date.ToString("yyyy-MM-dd HH:mm:ss")}|{n.Tag ?? ""}"));
         }
 
         private void LoadNotes()
@@ -50,12 +50,13 @@ namespace WindowsFormsApp6
                 foreach (var line in lines)
                 {
                     var parts = line.Split('|');
-                    if (parts.Length == 3)
+                    if (parts.Length >= 3)
                     {
                         DateTime date;
                         if (DateTime.TryParse(parts[2], out date))
                         {
-                            Notes.Add(new Note(parts[0], parts[1], date));
+                            string tag = parts.Length >= 4 ? parts[3] : "";
+                            Notes.Add(new Note(parts[0], parts[1], date, tag));
                         }
                     }
                 }
